@@ -19,6 +19,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 
 using maddox.game;
 using maddox.game.world;
@@ -53,6 +54,110 @@ public class Mission : AMission
     private string createAircraftDisplayName(string aircraft)
     {
         return parseAirgroupName(aircraft) + ": " + aircraftNames[aircraft] + " (" + aircraftTypes[aircraft].Replace("Aircraft.", "") + ")";
+    }
+
+    private string createAirGroupDisplayName(string airGroupName)
+    {
+        // Fallback
+        string airGroupDisplayName = airGroupName;
+
+        if(airGroupName.Contains("LONDON"))
+        {
+            airGroupDisplayName += "London Flying Training School";
+        }
+        else if(airGroupName.StartsWith("BoB_RAF"))
+        {
+            if (airGroupName.Contains("FatCat"))
+            {
+                airGroupDisplayName = "FatCat Squadron RAF";
+            }
+            else
+            {
+                Match match = Regex.Match(airGroupName, @"(\d+)");
+                if (match.Success)
+                {
+                    airGroupDisplayName = "No. ";
+                    airGroupDisplayName += match.Value;
+                    airGroupDisplayName += " Squadron";
+
+                    if (airGroupName.Contains("RCAF"))
+                    {
+                        airGroupDisplayName += " RCAF";
+                    }
+                    else
+                    {
+                        airGroupDisplayName += " RAF";
+                    }
+                }
+            }
+        }
+        else if (airGroupName.StartsWith("BoB_LW"))
+        {
+            if(airGroupName.Contains("BoB_LW_AufklGr_ObdL"))
+            {
+                airGroupDisplayName = "Aufklärungsgruppe ObdL";
+            }
+            else if(airGroupName.Contains("BoB_LW_AufklGr10"))
+            {
+                airGroupDisplayName = "Aufklärungsgruppe 10";
+            }
+            else if(airGroupName.Contains("BoB_LW_Wekusta_51"))
+            {
+                airGroupDisplayName = "Wekusta 51";
+            }
+            else if (airGroupName.Contains("BoB_LW_Wekusta_ObdL"))
+            {
+                airGroupDisplayName = "Wekusta ObdL";
+            }
+            else
+            {
+                Match match = Regex.Match(airGroupName, @"(\d+)");
+                if (match.Success)
+                {
+                    if(airGroupName.Contains("Stab"))
+                    {
+                        airGroupDisplayName = "Stab/";
+                    }
+                    else
+                    {
+                        airGroupDisplayName = "x./";
+                    }
+                                        
+                    if (airGroupName.Contains("JG"))
+                    {
+                        airGroupDisplayName += "JG";
+                    }
+                    else if (airGroupName.Contains("ZG"))
+                    {
+                        airGroupDisplayName += "ZG";
+                    }
+                    else if (airGroupName.Contains("LG"))
+                    {
+                        airGroupDisplayName += "LG";
+                    }
+                    else if (airGroupName.Contains("StG"))
+                    {
+                        airGroupDisplayName += "StG";
+                    }
+                    else if (airGroupName.Contains("KG"))
+                    {
+                        airGroupDisplayName += "KG";
+                    }
+                    else if (airGroupName.Contains("KGzbV"))
+                    {
+                        airGroupDisplayName += "KGzbV";
+                    }
+                    else if (airGroupName.Contains("AufklGr"))
+                    {
+                        airGroupDisplayName += "AufklGr";
+                    }
+
+                    airGroupDisplayName += " " + match.Value;
+                }
+            }
+        }
+
+        return airGroupDisplayName;
     }
 
     internal string parseAirgroupName(string airGroupName)
