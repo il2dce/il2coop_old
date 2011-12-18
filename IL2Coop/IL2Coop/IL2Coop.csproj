@@ -52,6 +52,7 @@
     <Reference Include="maddox">
       <HintPath>C:\Program Files (x86)\Steam\SteamApps\common\il-2 sturmovik cliffs of dover\parts\core\maddox.dll</HintPath>
     </Reference>
+    <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="IL2Coop.cs" />
