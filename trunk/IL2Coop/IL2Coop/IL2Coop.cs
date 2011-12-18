@@ -864,6 +864,7 @@ public class Mission : AMission
             isRunning = true;
 
             // Destroy all dummy aircraft.
+            List<AiAircraft> aircaftsToDestroy = new List<AiAircraft>();
             if (GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
             {
                 for (int armyIndex = 0; armyIndex < GamePlay.gpArmies().Length; armyIndex++)
@@ -882,13 +883,17 @@ public class Mission : AMission
                                     if (actor is AiCart )
                                     {
                                         AiAircraft aircraft = actor as AiAircraft;
-                                        aircraft.Destroy();
+                                        aircaftsToDestroy.Add(aircraft);
                                     }
                                 }
                             }
                         }
                     }
                 }
+            }
+            foreach (AiAircraft aircraft in aircaftsToDestroy)
+            {
+                aircraft.Destroy();
             }
 
             // Load the selected mission file.
