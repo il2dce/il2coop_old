@@ -500,18 +500,16 @@ public class Mission : AMission
         // Place player into a dummy aircraft.
         if (GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
         {
-            for (int armyIndex = 0; armyIndex < GamePlay.gpArmies().Length; armyIndex++)
+            foreach(int armyIndex in GamePlay.gpArmies())
             {
-                if (GamePlay.gpAirGroups(GamePlay.gpArmies()[armyIndex]) != null && GamePlay.gpAirGroups(GamePlay.gpArmies()[armyIndex]).Length > 0)
+                if (GamePlay.gpAirGroups(armyIndex) != null && GamePlay.gpAirGroups(armyIndex).Length > 0)
                 {
-                    for (int airGroupIndex = 0; airGroupIndex < GamePlay.gpAirGroups(GamePlay.gpArmies()[armyIndex]).Length; airGroupIndex++)
+                    foreach( AiAirGroup airGroup in GamePlay.gpAirGroups(armyIndex))
                     {
-                        AiAirGroup airGroup = GamePlay.gpAirGroups(GamePlay.gpArmies()[armyIndex])[airGroupIndex];
                         if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
                         {
-                            for (int aircraftIndex = 0; aircraftIndex < airGroup.GetItems().Length; aircraftIndex++)
+                            foreach(AiActor actor in airGroup.GetItems())
                             {
-                                AiActor actor = airGroup.GetItems()[aircraftIndex];
                                 if (actor is AiAircraft)
                                 {
                                     AiAircraft aircraft = actor as AiAircraft;
@@ -896,26 +894,22 @@ public class Mission : AMission
             isRunning = true;
 
             // Destroy all dummy aircraft.
-            List<AiAircraft> aircaftsToDestroy = new List<AiAircraft>();
             if (GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
             {
-                for (int armyIndex = 0; armyIndex < GamePlay.gpArmies().Length; armyIndex++)
+                foreach (int armyIndex in GamePlay.gpArmies())
                 {
-                    if (GamePlay.gpAirGroups(GamePlay.gpArmies()[armyIndex]) != null && GamePlay.gpAirGroups(GamePlay.gpArmies()[armyIndex]).Length > 0)
+                    if (GamePlay.gpAirGroups(armyIndex) != null && GamePlay.gpAirGroups(armyIndex).Length > 0)
                     {
-                        for (int airGroupIndex = 0; airGroupIndex < GamePlay.gpAirGroups(GamePlay.gpArmies()[armyIndex]).Length; airGroupIndex++)
+                        foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(armyIndex))
                         {
-                            AiAirGroup airGroup = GamePlay.gpAirGroups(GamePlay.gpArmies()[armyIndex])[airGroupIndex];
                             if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
                             {
-                                for (int aircraftIndex = 0; aircraftIndex < airGroup.GetItems().Length; aircraftIndex++)
+                                foreach (AiActor actor in airGroup.GetItems())
                                 {
-                                    AiActor actor = airGroup.GetItems()[aircraftIndex];
-                                    
-                                    if (actor is AiCart )
+                                    if (actor is AiAircraft)
                                     {
                                         AiAircraft aircraft = actor as AiAircraft;
-                                        aircaftsToDestroy.Add(aircraft);
+                                        aircraft.Destroy();
                                     }
                                 }
                             }
@@ -923,11 +917,7 @@ public class Mission : AMission
                     }
                 }
             }
-            foreach (AiAircraft aircraft in aircaftsToDestroy)
-            {
-                aircraft.Destroy();
-            }
-
+            
             // Load the selected mission file.
             GamePlay.gpPostMissionLoad(selectedMissionFile);
         }
