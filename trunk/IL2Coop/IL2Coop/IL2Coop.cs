@@ -34,6 +34,7 @@ public class Mission : AMission
         ClientMainMenu,
         SelectMissionMenu,
         SelectAircraftMenu,
+        PlayerMenu,
     }
 
     private ISectionFile selectedMissionFile = null;
@@ -44,7 +45,9 @@ public class Mission : AMission
     private Dictionary<string, string> aircraftTypes = new Dictionary<string, string>();
     private Dictionary<string, string> aircraftNames = new Dictionary<string, string>();
     private Dictionary<string, string> places = new Dictionary<string, string>();
-    private Dictionary<string, Player> aircraftSelections = new Dictionary<string, Player>();
+    private Dictionary<string, Player> aircraftSelections = new Dictionary<string, Player>();    
+    private List<Player> ready = new List<Player>();
+
     private Dictionary<Player, int> offsets = new Dictionary<Player, int>();
 
     private bool isRunning = false;
@@ -305,7 +308,22 @@ public class Mission : AMission
             {
                 setSelectAircraftMenu(player);
             }
-            else if (menuItemIndex == 3)
+            if (menuItemIndex == 3)
+            {
+                if (!ready.Contains(player))
+                {
+                    ready.Add(player);
+                }
+                else
+                {
+                    ready.Remove(player);
+                }
+            }
+            else if (menuItemIndex == 4)
+            {
+                setPlayerMenu(player);
+            }
+            else if (menuItemIndex == 5)
             {
                 startMission(player);
             }
@@ -315,6 +333,21 @@ public class Mission : AMission
             if (menuItemIndex == 1)
             {
                 setSelectAircraftMenu(player);
+            }
+            if (menuItemIndex == 2)
+            {
+                if (!ready.Contains(player))
+                {
+                    ready.Add(player);
+                }
+                else
+                {
+                    ready.Remove(player);
+                }
+            }
+            else if (menuItemIndex == 3)
+            {
+                setPlayerMenu(player);
             }
         }
         else if (ID == (int)MenuID.SelectMissionMenu)
@@ -401,7 +434,31 @@ public class Mission : AMission
                     }
                 }
             }
-        }        
+        }
+        else if (ID == (int)MenuID.PlayerMenu)
+        {
+            if (menuItemIndex == 0)
+            {
+                setMainMenu(player);
+            }
+            else
+            {
+                if (menuItemIndex == 8)
+                {
+                    offsets[player] = offsets[player] - 1;
+                    setPlayerMenu(player);
+                }
+                else if (menuItemIndex == 9)
+                {
+                    offsets[player] = offsets[player] + 1;
+                    setPlayerMenu(player);
+                }
+                else
+                {
+                    setPlayerMenu(player);
+                }
+            }
+        }
     }
 
     public override void OnPlaceEnter(Player player, AiActor actor, int placeIndex)
@@ -495,11 +552,25 @@ public class Mission : AMission
 
                 if (selectedAircraft == null)
                 {
-                    GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.HostMainMenu, new string[] { "Selected Mission: " + selectedMissionFileShortName, "Select Aircraft", "Start Mission" }, new bool[] { true, true, false });
+                    if (!ready.Contains(player))
+                    {
+                        GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.HostMainMenu, new string[] { "Selected Mission: " + selectedMissionFileShortName, "Select Aircraft", "Ready", "Players", "Start Mission" }, new bool[] { true, true, false, true, false });
+                    }
+                    else
+                    {
+                        GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.HostMainMenu, new string[] { "Selected Mission: " + selectedMissionFileShortName, "Select Aircraft", "Not Ready", "Players", "Start Mission" }, new bool[] { true, true, false, true, false });
+                    }
                 }
                 else
                 {
-                    GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.HostMainMenu, new string[] { "Selected Mission: " + selectedMissionFileShortName, "Selected Aircraft: " + createAircraftDisplayName(selectedAircraft), "Start Mission" }, new bool[] { true, true, false });
+                    if (!ready.Contains(player))
+                    {
+                        GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.HostMainMenu, new string[] { "Selected Mission: " + selectedMissionFileShortName, "Selected Aircraft: " + createAircraftDisplayName(selectedAircraft), "Ready", "Players", "Start Mission" }, new bool[] { true, true, false, true, false });
+                    }
+                    else
+                    {
+                        GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.HostMainMenu, new string[] { "Selected Mission: " + selectedMissionFileShortName, "Selected Aircraft: " + createAircraftDisplayName(selectedAircraft), "Not Ready", "Players", "Start Mission" }, new bool[] { true, true, false, true, false });
+                    }
                 }
             }
         }
@@ -520,14 +591,117 @@ public class Mission : AMission
 
                 if (selectedAircraft == null)
                 {
-                    GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.ClientMainMenu, new string[] { "Select Aircraft" }, new bool[] { true });
+                    if (!ready.Contains(player))
+                    {
+                        GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.ClientMainMenu, new string[] { "Select Aircraft", "Ready", "Players" }, new bool[] { true, false, true });
+                    }
+                    else
+                    {
+                        GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.ClientMainMenu, new string[] { "Select Aircraft", "Not Ready", "Players" }, new bool[] { true, false, true });
+                    }
                 }
                 else
                 {
-                    GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.ClientMainMenu, new string[] { "Selected Aircraft: " + createAircraftDisplayName(selectedAircraft) }, new bool[] { true });
+                    if (!ready.Contains(player))
+                    {
+                        GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.ClientMainMenu, new string[] { "Selected Aircraft: " + createAircraftDisplayName(selectedAircraft), "Ready", "Players" }, new bool[] { true, false, true });
+                    }
+                    else
+                    {
+                        GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.ClientMainMenu, new string[] { "Selected Aircraft: " + createAircraftDisplayName(selectedAircraft), "Not Ready", "Players" }, new bool[] { true, false, true });
+                    }
                 }
             }
         }
+    }
+
+    private void setPlayerMenu(Player player)
+    {
+        List<Player> players = new List<Player>();
+        if (GamePlay.gpPlayer() != null)
+        {
+            if(!players.Contains(GamePlay.gpPlayer()))
+            {
+                players.Add(GamePlay.gpPlayer());
+            }
+        }
+        if (GamePlay.gpRemotePlayers() != null && GamePlay.gpRemotePlayers().Length > 0)
+        {
+            players.AddRange(GamePlay.gpRemotePlayers());
+        }
+
+        if (offsets[player] < 0)
+        {
+            offsets[player] = (int)players.Count / 7;
+        }
+        else if ((offsets[player] * 7) > players.Count)
+        {
+            offsets[player] = 0;
+        }
+
+        int entryCount = 9;
+        string[] entry = new string[entryCount];
+        bool[] hasSubEntry = new bool[entryCount];
+
+        for (int entryIndex = 0; entryIndex < entryCount; entryIndex++)
+        {
+            if (entryIndex == entryCount - 2)
+            {
+                entry[entryIndex] = "Page up";
+                hasSubEntry[entryIndex] = true;
+            }
+            else if (entryIndex == entryCount - 1)
+            {
+                entry[entryIndex] = "Page down";
+                hasSubEntry[entryIndex] = true;
+            }
+            else
+            {
+                if (entryIndex + (offsets[player] * 7) < players.Count)
+                {
+                    string aircraftName = null;
+                    foreach (string aircraftKey in aircraftSelections.Keys)
+                    {
+                        if (aircraftSelections[aircraftKey] == players[entryIndex + (offsets[player] * 7)])
+                        {
+                            aircraftName = aircraftKey;
+                            break;
+                        }
+                    }
+
+                    if (ready.Contains(players[entryIndex + (offsets[player] * 7)]))
+                    {
+                        if (aircraftName == null)
+                        {
+                            entry[entryIndex] = players[entryIndex + (offsets[player] * 7)].Name() + ": Ready";
+                        }
+                        else
+                        {
+                            entry[entryIndex] = players[entryIndex + (offsets[player] * 7)].Name() + ": Ready (" + createAircraftDisplayName(aircraftName) + ")";
+                        }
+                    }
+                    else
+                    {
+                        if (aircraftName == null)
+                        {
+                            entry[entryIndex] = players[entryIndex + (offsets[player] * 7)].Name() + ": Not Ready";
+                        }
+                        else
+                        {
+                            entry[entryIndex] = players[entryIndex + (offsets[player] * 7)].Name() + ": Not Ready (" + createAircraftDisplayName(aircraftName) + ")";
+                        }
+                    }
+                    hasSubEntry[entryIndex] = true;
+                }
+                else
+                {
+                    entry[entryIndex] = "";
+                    hasSubEntry[entryIndex] = true;
+                }
+            }
+        }
+
+        GamePlay.gpSetOrderMissionMenu(player, true, (int)MenuID.PlayerMenu, entry, hasSubEntry);
     }
 
     private void setSelectMissionMenu(Player player)
@@ -636,7 +810,11 @@ public class Mission : AMission
         if (selectedMissionFile != null)
         {
             aircrafts.Clear();
+            aircraftTypes.Clear();
+            aircraftNames.Clear();
+            places.Clear();
             aircraftSelections.Clear();
+            ready.Clear();
 
             for (int airGroupIndex = 0; airGroupIndex < selectedMissionFile.lines("AirGroups"); airGroupIndex++)
             {
