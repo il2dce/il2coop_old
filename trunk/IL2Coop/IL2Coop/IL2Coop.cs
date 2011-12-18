@@ -35,7 +35,7 @@ public class Mission : AMission
         SelectMissionMenu,
         SelectAircraftMenu,
     }
-    
+
     private ISectionFile selectedMissionFile = null;
     private string selectedMissionFileName = null;
     private string selectedMissionFileShortName = null;
@@ -43,8 +43,11 @@ public class Mission : AMission
     private List<string> aircrafts = new List<string>();
     private Dictionary<string, string> aircraftTypes = new Dictionary<string, string>();
     private Dictionary<string, string> aircraftNames = new Dictionary<string, string>();
+    private Dictionary<string, string> places = new Dictionary<string, string>();
     private Dictionary<string, Player> aircraftSelections = new Dictionary<string, Player>();
     private Dictionary<Player, int> offsets = new Dictionary<Player, int>();
+
+    private bool isRunning = false;
 
     private string createMissionFileDisplayName(string missionFileName)
     {
@@ -53,7 +56,7 @@ public class Mission : AMission
 
     private string createAircraftDisplayName(string aircraft)
     {
-        return parseAirgroupName(aircraft) + ": " + aircraftNames[aircraft] + " (" + aircraftTypes[aircraft].Replace("Aircraft.", "") + ")";
+        return aircraft.Replace("." + places[aircraft], "") + ": " + aircraftNames[aircraft] + " (" + aircraftTypes[aircraft].Replace("Aircraft.", "") + " " + places[aircraft] + ")";
     }
 
     private string createAirGroupDisplayName(string airGroupName)
@@ -65,7 +68,7 @@ public class Mission : AMission
         {
             airGroupDisplayName += "London Flying Training School";
         }
-        else if(airGroupName.StartsWith("BoB_RAF"))
+        else if(airGroupName.StartsWith("BoB_RAF_"))
         {
             if (airGroupName.Contains("FatCat"))
             {
@@ -91,7 +94,7 @@ public class Mission : AMission
                 }
             }
         }
-        else if (airGroupName.StartsWith("BoB_LW"))
+        else if (airGroupName.StartsWith("BoB_LW_"))
         {
             if(airGroupName.Contains("BoB_LW_AufklGr_ObdL"))
             {
@@ -156,84 +159,108 @@ public class Mission : AMission
                 }
             }
         }
+        else if(airGroupName.StartsWith("BoB_RA_"))
+        {
+
+        }
 
         return airGroupDisplayName;
     }
-
-    internal string parseAirgroupName(string airGroupName)
+    
+    private string[] getPlaces(string aircraftType)
     {
-        string[] tempString = null;
-        string parsedName = "";
-        tempString = airGroupName.Split('.');
-
-        if (tempString[0].StartsWith("BoB_LW_"))
+        if(aircraftType == "Aircraft.Bf-109E-1")
         {
-            StringBuilder b = new StringBuilder(tempString[0]);
-            parsedName = b.Replace("BoB_LW_", "").ToString();
-
-            if (parsedName.EndsWith("_I"))
-                parsedName = "I./" + b.Replace("_I", "").ToString();
-            else if (parsedName.EndsWith("_II"))
-                parsedName = "II./" + b.Replace("_II", "").ToString();
-            else if (parsedName.EndsWith("_III"))
-                parsedName = "III./" + b.Replace("_III", "").ToString();
-            else if (parsedName.EndsWith("_IV"))
-                parsedName = "IV./" + b.Replace("_IV", "").ToString();
-            else if (parsedName.EndsWith("_V"))
-                parsedName = "V./" + b.Replace("_V", "").ToString();
-            else if (parsedName.EndsWith("_Stab"))
-                parsedName = "Stab./" + b.Replace("_Stab", "").ToString();
-
-            if (tempString[1].StartsWith("0"))
-            {
-                if (!parsedName.StartsWith("Stab"))
-                    parsedName += " (Stabstaffel)";
-            }
-            else if (tempString[1].StartsWith("1"))
-                parsedName += " (1. Staffel)";
-            else if (tempString[1].StartsWith("2"))
-                parsedName += " (2. Staffel)";
-            else if (tempString[1].StartsWith("3"))
-                parsedName += " (3. Staffel)";
-            else if (tempString[1].StartsWith("4"))
-                parsedName += " (4. Staffel)";
-            else parsedName += " (Unknown)";
+            return new string[] { "Pilot" };
         }
-        else if (tempString[0].StartsWith("BoB_RAF_"))
+        else if(aircraftType == "Aircraft.Bf-109E-3")
         {
-            StringBuilder b = new StringBuilder(tempString[0]);
-
-            if (tempString[0].StartsWith("BoB_RAF_F_FatCat"))
-                parsedName = b.Replace("BoB_RAF_F_", "(F)  ").ToString();
-            else if (tempString[0].StartsWith("BoB_RAF_F_"))
-                parsedName = b.Replace("BoB_RAF_F_", "(F)  No. ").ToString();
-            else if (tempString[0].StartsWith("BoB_RAF_B_"))
-                parsedName = b.Replace("BoB_RAF_B_", "(B)  No. ").ToString();
-            if (parsedName.EndsWith("_Early"))
-                parsedName = b.Replace("_Early", "").ToString();
-            else if (parsedName.EndsWith("_Late"))
-                parsedName = b.Replace("_Late", "").ToString();
-            if (parsedName.EndsWith("Sqn"))
-                parsedName = b.Replace("Sqn", ".Sqn").ToString();
-            else if (parsedName.EndsWith("_PL"))
-                parsedName = b.Replace("_PL", ".Sqn (PL)").ToString();
-            else if (parsedName.EndsWith("_CZ"))
-                parsedName = b.Replace("_CZ", ".Sqn (CZ)").ToString();
-            else if (parsedName.EndsWith("_RCAF"))
-                parsedName = b.Replace("_RCAF", ".Sqn RCAF").ToString();
-
-            if (tempString[1].StartsWith("0"))
-                parsedName += " (1)";
-            else if (tempString[1].StartsWith("1"))
-                parsedName += " (2)";
-            else if (tempString[1].StartsWith("2"))
-                parsedName += " (3)";
-            else if (tempString[1].StartsWith("3"))
-                parsedName += " (4)";
-            else parsedName += " (Unknown)";
+            return new string[] { "Pilot" };
         }
-
-        return parsedName;
+        else if(aircraftType == "Aircraft.Bf-109E-3B")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if(aircraftType == "Aircraft.Bf-109E-4")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if(aircraftType == "Aircraft.Bf-109E-4B")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if(aircraftType == "Aircraft.G50")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if(aircraftType == "Aircraft.SpitfireMkI_Heartbreaker")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if(aircraftType == "Aircraft.HurricaneMkI_dH5-20")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if(aircraftType == "Aircraft.HurricaneMkI")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if(aircraftType == "Aircraft.SpitfireMkI")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if(aircraftType == "Aircraft.SpitfireMkIa")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.SpitfireMkIIa")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if(aircraftType == "Aircraft.Ju-87B-2")
+        {
+            return new string[] { "Pilot", "Gunner" };
+        }
+        else if(aircraftType == "Aircraft.Bf-110C-4")
+        {
+            return new string[] { "Pilot", "Gunner" };
+        }
+        else if(aircraftType == "Aircraft.Bf-110C-7")
+        {
+            return new string[] { "Pilot", "Gunner" };
+        }
+        else if(aircraftType == "Aircraft.Bf-110C-7")
+        {
+            return new string[] { "Pilot", "Gunner" };
+        }
+        else if(aircraftType == "Aircraft.DH82A")
+        {
+            return new string[] { "Pilot", "Co-Pilot" };
+        }
+        else if(aircraftType == "Aircraft.BlenheimMkIV")
+        {
+            return new string[] { "Pilot", "Bombardier", "Gunner" };
+        }
+        else if(aircraftType == "Aircraft.BR-20M")
+        {
+            return new string[] { "Pilot", "Co-Pilot", "Bombardier", "Nose Gunner", "Top Gunner", "Observer" };
+        }
+        else if (aircraftType == "Aircraft.Ju-88A-1")
+        {
+            return new string[] { "Pilot", "Bombardier", "Nose Gunner", "Top Gunner", "Ventral Gunner" };
+        }
+        else if (aircraftType == "Aircraft.He-111H-2")
+        {
+            return new string[] { "Pilot", "Bombardier", "Nose Gunner Down", "Nose Gunner Up", "Top Gunner", "Ventral Gunner", "Waist Gunner Left", "Waist Gunner Right" };
+        }
+        else if (aircraftType == "Aircraft.He-111P-2")
+        {
+            return new string[] { "Pilot", "Bombardier", "Nose Gunner", "Top Gunner", "Ventral Gunner", "Waist Gunner Left", "Waist Gunner Right" };
+        }
+        else
+        {
+            return null;
+        }
     }
 
     public override void OnActorCreated(int missionNumber, string shortName, AiActor actor)
@@ -245,9 +272,22 @@ public class Mission : AMission
             AiAircraft aircraft = actor as AiAircraft;
             string aircraftName = actor.Name().Replace(missionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + ":", "");
 
-            if(aircraftSelections.ContainsKey(aircraftName))
+            foreach (string aircraftKey in aircraftSelections.Keys)
             {
-                aircraftSelections[aircraftName].PlaceEnter(aircraft, 0);
+                if (aircraftKey.StartsWith(aircraftName + "."))
+                {
+                    string place = aircraftKey.Replace(aircraftName + ".", "");
+                    if (getPlaces(aircraftTypes[aircraftKey]) != null && getPlaces(aircraftTypes[aircraftKey]).Length > 0)
+                    {
+                        for (int placeIndex = 0; placeIndex < getPlaces(aircraftTypes[aircraftKey]).Length; placeIndex++)
+                        {
+                            if (getPlaces(aircraftTypes[aircraftKey])[placeIndex] == place)
+                            {
+                                aircraftSelections[aircraftKey].PlaceEnter(aircraft, placeIndex);
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -382,7 +422,10 @@ public class Mission : AMission
     {
         base.OnPlayerArmy(player, army);
 
-        setDummyAircraft(player);
+        if (!isRunning)
+        {
+            setDummyAircraft(player);
+        }
     }
     
     private void setDummyAircraft(Player player)
@@ -456,7 +499,7 @@ public class Mission : AMission
                 }
                 else
                 {
-                    GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.HostMainMenu, new string[] { "Selected Mission: " + selectedMissionFileShortName, "Selected Aircraft: " + selectedAircraft, "Start Mission" }, new bool[] { true, true, false });
+                    GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.HostMainMenu, new string[] { "Selected Mission: " + selectedMissionFileShortName, "Selected Aircraft: " + createAircraftDisplayName(selectedAircraft), "Start Mission" }, new bool[] { true, true, false });
                 }
             }
         }
@@ -481,7 +524,7 @@ public class Mission : AMission
                 }
                 else
                 {
-                    GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.ClientMainMenu, new string[] { "Selected Aircraft: " + selectedAircraft }, new bool[] { true });
+                    GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.ClientMainMenu, new string[] { "Selected Aircraft: " + createAircraftDisplayName(selectedAircraft) }, new bool[] { true });
                 }
             }
         }
@@ -617,9 +660,17 @@ public class Mission : AMission
                             for (int aircraftIndex = 0; aircraftIndex < acNumberList.Length; aircraftIndex++)
                             {
                                 string aircraft = airGroupName + flightIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + aircraftIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
-                                aircrafts.Add(aircraft);
-                                aircraftTypes[aircraft] = aircraftType;
-                                aircraftNames[aircraft] = acNumberList[aircraftIndex];
+
+                                if (getPlaces(aircraftType) != null)
+                                {
+                                    foreach (string place in getPlaces(aircraftType))
+                                    {
+                                        aircrafts.Add(aircraft + "." + place);
+                                        aircraftTypes[aircraft + "." + place] = aircraftType;
+                                        aircraftNames[aircraft + "." + place] = acNumberList[aircraftIndex];
+                                        places[aircraft + "." + place] = place;
+                                    }
+                                }
                             }
                         }
                     }
@@ -632,6 +683,8 @@ public class Mission : AMission
     {
         if (selectedMissionFile != null)
         {
+            isRunning = true;
+
             // Destroy all dummy aircraft.
             if (GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
             {
@@ -647,7 +700,8 @@ public class Mission : AMission
                                 for (int aircraftIndex = 0; aircraftIndex < airGroup.GetItems().Length; aircraftIndex++)
                                 {
                                     AiActor actor = airGroup.GetItems()[aircraftIndex];
-                                    if (actor is AiAircraft)
+                                    
+                                    if (actor is AiCart )
                                     {
                                         AiAircraft aircraft = actor as AiAircraft;
                                         aircraft.Destroy();
