@@ -286,6 +286,7 @@ public class Mission : AMission
                         {
                             if (getPlaces(aircraftTypes[aircraftKey])[placeIndex] == place)
                             {
+                                aircraftSelections[aircraftKey].SelectArmy(aircraft.Army());
                                 aircraftSelections[aircraftKey].PlaceEnter(aircraft, placeIndex);
                             }
                         }
@@ -394,6 +395,14 @@ public class Mission : AMission
                         parseSelectedMissionFile();
 
                         setMainMenu(player);
+
+                        if (GamePlay.gpRemotePlayers() != null && GamePlay.gpRemotePlayers().Length > 0)
+                        {
+                            foreach (Player remotePlayer in GamePlay.gpRemotePlayers())
+                            {
+                                setMainMenu(remotePlayer);
+                            }
+                        }
                     }
                     else
                     {
@@ -634,7 +643,7 @@ public class Mission : AMission
 
                 entry[2] = "Players";
 
-                GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.HostMainMenu, entry, hasSubEntry);
+                GamePlay.gpSetOrderMissionMenu(player, false, (int)MenuID.ClientMainMenu, entry, hasSubEntry);
             }
         }
     }
@@ -909,6 +918,13 @@ public class Mission : AMission
                                     if (actor is AiAircraft)
                                     {
                                         AiAircraft aircraft = actor as AiAircraft;
+                                        for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
+                                        {
+                                            if (aircraft.Player(placeIndex) != null)
+                                            {
+                                                aircraft.Player(placeIndex).PlaceLeave(placeIndex);
+                                            }
+                                        }
                                         aircraft.Destroy();
                                     }
                                 }
