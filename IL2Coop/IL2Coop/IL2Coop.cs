@@ -266,9 +266,60 @@ public class Mission : AMission
         }
     }
 
+    public override void OnMissionLoaded(int missionNumber)
+    {
+        base.OnMissionLoaded(missionNumber);
+
+        if (GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
+        {
+            foreach (int armyIndex in GamePlay.gpArmies())
+            {
+                if (GamePlay.gpAirGroups(armyIndex) != null && GamePlay.gpAirGroups(armyIndex).Length > 0)
+                {
+                    foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(armyIndex))
+                    {
+                        if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
+                        {
+                            foreach (AiActor actor in airGroup.GetItems())
+                            {
+                                if (actor is AiAircraft)
+                                {
+                                    AiAircraft aircraft = actor as AiAircraft;
+
+                                    string aircraftName = actor.Name().Replace(missionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + ":", "");
+                                    
+                                    foreach (string aircraftKey in aircraftSelections.Keys)
+                                    {
+                                        if (aircraftKey.StartsWith(aircraftName + "."))
+                                        {
+                                            string place = aircraftKey.Replace(aircraftName + ".", "");
+                                            if (getPlaces(aircraftTypes[aircraftKey]) != null && getPlaces(aircraftTypes[aircraftKey]).Length > 0)
+                                            {
+                                                for (int placeIndex = 0; placeIndex < getPlaces(aircraftTypes[aircraftKey]).Length; placeIndex++)
+                                                {
+                                                    if (getPlaces(aircraftTypes[aircraftKey])[placeIndex] == place)
+                                                    {
+                                                        aircraftSelections[aircraftKey].SelectArmy(aircraft.Army());
+                                                        aircraftSelections[aircraftKey].PlaceEnter(aircraft, placeIndex);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     public override void OnActorCreated(int missionNumber, string shortName, AiActor actor)
     {
         base.OnActorCreated(missionNumber, shortName, actor);
+
+        return;
 
         if (actor is AiAircraft)
         {
@@ -295,8 +346,7 @@ public class Mission : AMission
             }
         }
     }
-
-
+    
     public override void OnOrderMissionMenuSelected(Player player, int ID, int menuItemIndex)
     {
         if (ID == (int)MenuID.HostMainMenu)
