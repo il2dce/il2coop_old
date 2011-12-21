@@ -265,7 +265,7 @@ public class Mission : AMission
             return null;
         }
     }
-
+    
     public override void OnMissionLoaded(int missionNumber)
     {
         base.OnMissionLoaded(missionNumber);
@@ -286,21 +286,23 @@ public class Mission : AMission
                                 {
                                     AiAircraft aircraft = actor as AiAircraft;
 
-                                    string aircraftName = actor.Name().Replace(missionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + ":", "");
-                                    
-                                    foreach (string aircraftKey in aircraftSelections.Keys)
+                                    if(aircraft.Name().StartsWith(missionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + ":"))
                                     {
-                                        if (aircraftKey.StartsWith(aircraftName + "."))
+                                        string aircraftName = actor.Name().Replace(missionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + ":", "");                                    
+                                        foreach (string aircraftKey in aircraftSelections.Keys)
                                         {
-                                            string place = aircraftKey.Replace(aircraftName + ".", "");
-                                            if (getPlaces(aircraftTypes[aircraftKey]) != null && getPlaces(aircraftTypes[aircraftKey]).Length > 0)
+                                            if (aircraftKey.StartsWith(aircraftName + "."))
                                             {
-                                                for (int placeIndex = 0; placeIndex < getPlaces(aircraftTypes[aircraftKey]).Length; placeIndex++)
+                                                string place = aircraftKey.Replace(aircraftName + ".", "");
+                                                if (getPlaces(aircraftTypes[aircraftKey]) != null && getPlaces(aircraftTypes[aircraftKey]).Length > 0)
                                                 {
-                                                    if (getPlaces(aircraftTypes[aircraftKey])[placeIndex] == place)
+                                                    for (int placeIndex = 0; placeIndex < getPlaces(aircraftTypes[aircraftKey]).Length; placeIndex++)
                                                     {
-                                                        aircraftSelections[aircraftKey].SelectArmy(aircraft.Army());
-                                                        aircraftSelections[aircraftKey].PlaceEnter(aircraft, placeIndex);
+                                                        if (getPlaces(aircraftTypes[aircraftKey])[placeIndex] == place)
+                                                        {
+                                                            aircraftSelections[aircraftKey].SelectArmy(aircraft.Army());
+                                                            aircraftSelections[aircraftKey].PlaceEnter(aircraft, placeIndex);
+                                                        }
                                                     }
                                                 }
                                             }
