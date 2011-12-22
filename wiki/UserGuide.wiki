@@ -25,7 +25,7 @@ The list contains all mission files that are in within the _missions folder_ (e.
 
 [http://il2coop.googlecode.com/svn/wiki/UserGuide/img/03_OrderMissionMenuHostSelectMission.png]
 
-Once the mission was selected the _Select Aircraft_ menu is available.
+Once the mission was selected the _Select aircraft_ menu is available.
 
 [http://il2coop.googlecode.com/svn/wiki/UserGuide/img/04_OrderMissionMenuHostMainAfterMissionSelection.png]
 
@@ -42,3 +42,5 @@ The dummy aircrafts are removed and the mission commences.
 [http://il2coop.googlecode.com/svn/wiki/UserGuide/img/07_AfterMissionStart.png]
 
 == Client ==
+
+The client do not have the option to select or start a mission. They are limited to the _Select aircraft_ menu.
