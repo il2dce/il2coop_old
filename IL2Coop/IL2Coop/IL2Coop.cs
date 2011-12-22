@@ -47,7 +47,8 @@ public class Mission : AMission
     private Dictionary<string, string> places = new Dictionary<string, string>();
     private Dictionary<string, Player> aircraftSelections = new Dictionary<string, Player>();    
     private List<Player> ready = new List<Player>();
-
+    private List<string> idle = new List<string>();
+    
     private Dictionary<Player, int> offsets = new Dictionary<Player, int>();
 
     private bool isRunning = false;
@@ -270,85 +271,10 @@ public class Mission : AMission
     {
         base.OnMissionLoaded(missionNumber);
 
-        if (GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
-        {
-            foreach (int armyIndex in GamePlay.gpArmies())
-            {
-                if (GamePlay.gpAirGroups(armyIndex) != null && GamePlay.gpAirGroups(armyIndex).Length > 0)
-                {
-                    foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(armyIndex))
-                    {
-                        if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
-                        {
-                            foreach (AiActor actor in airGroup.GetItems())
-                            {
-                                if (actor is AiAircraft)
-                                {
-                                    AiAircraft aircraft = actor as AiAircraft;
-
-                                    if(aircraft.Name().StartsWith(missionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + ":"))
-                                    {
-                                        string aircraftName = actor.Name().Replace(missionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + ":", "");                                    
-                                        foreach (string aircraftKey in aircraftSelections.Keys)
-                                        {
-                                            if (aircraftKey.StartsWith(aircraftName + "."))
-                                            {
-                                                string place = aircraftKey.Replace(aircraftName + ".", "");
-                                                if (getPlaces(aircraftTypes[aircraftKey]) != null && getPlaces(aircraftTypes[aircraftKey]).Length > 0)
-                                                {
-                                                    for (int placeIndex = 0; placeIndex < getPlaces(aircraftTypes[aircraftKey]).Length; placeIndex++)
-                                                    {
-                                                        if (getPlaces(aircraftTypes[aircraftKey])[placeIndex] == place)
-                                                        {
-                                                            aircraftSelections[aircraftKey].SelectArmy(aircraft.Army());
-                                                            aircraftSelections[aircraftKey].PlaceEnter(aircraft, placeIndex);
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        DoTimeout handle = placePlayers;
+        Timeout(3.0, handle);
     }
 
-    public override void OnActorCreated(int missionNumber, string shortName, AiActor actor)
-    {
-        base.OnActorCreated(missionNumber, shortName, actor);
-
-        return;
-
-        if (actor is AiAircraft)
-        {
-            AiAircraft aircraft = actor as AiAircraft;
-            string aircraftName = actor.Name().Replace(missionNumber.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + ":", "");
-
-            foreach (string aircraftKey in aircraftSelections.Keys)
-            {
-                if (aircraftKey.StartsWith(aircraftName + "."))
-                {
-                    string place = aircraftKey.Replace(aircraftName + ".", "");
-                    if (getPlaces(aircraftTypes[aircraftKey]) != null && getPlaces(aircraftTypes[aircraftKey]).Length > 0)
-                    {
-                        for (int placeIndex = 0; placeIndex < getPlaces(aircraftTypes[aircraftKey]).Length; placeIndex++)
-                        {
-                            if (getPlaces(aircraftTypes[aircraftKey])[placeIndex] == place)
-                            {
-                                aircraftSelections[aircraftKey].SelectArmy(aircraft.Army());
-                                aircraftSelections[aircraftKey].PlaceEnter(aircraft, placeIndex);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
     public override void OnOrderMissionMenuSelected(Player player, int ID, int menuItemIndex)
     {
         if (ID == (int)MenuID.HostMainMenu)
@@ -900,6 +826,7 @@ public class Mission : AMission
             places.Clear();
             aircraftSelections.Clear();
             ready.Clear();
+            idle.Clear();
 
             for (int airGroupIndex = 0; airGroupIndex < selectedMissionFile.lines("AirGroups"); airGroupIndex++)
             {
@@ -911,6 +838,12 @@ public class Mission : AMission
 
                 // Remove the flight mask
                 string airGroupName = key.Substring(0, key.Length - 1);
+
+                if (!(selectedMissionFile.get(key, "Idle") == "1"))
+                {
+                    selectedMissionFile.set(key, "Idle", true);
+                    idle.Add(key);
+                }
 
                 for (int flightIndex = 0; flightIndex < 4; flightIndex++)
                 {
@@ -942,10 +875,63 @@ public class Mission : AMission
         }
     }
 
+    private void placePlayers()
+    {
+        if (GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
+        {
+            foreach (int armyIndex in GamePlay.gpArmies())
+            {
+                if (GamePlay.gpAirGroups(armyIndex) != null && GamePlay.gpAirGroups(armyIndex).Length > 0)
+                {
+                    foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(armyIndex))
+                    {
+                        if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
+                        {
+                            foreach (AiActor actor in airGroup.GetItems())
+                            {
+                                if (actor is AiAircraft)
+                                {
+                                    AiAircraft aircraft = actor as AiAircraft;
 
+                                    if (aircraft.Name().StartsWith((GamePlay.gpNextMissionNumber() - 1).ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + ":"))
+                                    {
+                                        string aircraftName = actor.Name().Replace((GamePlay.gpNextMissionNumber() - 1).ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + ":", "");
+                                        foreach (string aircraftKey in aircraftSelections.Keys)
+                                        {
+                                            if (aircraftKey.StartsWith(aircraftName + "."))
+                                            {
+                                                string place = aircraftKey.Replace(aircraftName + ".", "");
+                                                if (getPlaces(aircraftTypes[aircraftKey]) != null && getPlaces(aircraftTypes[aircraftKey]).Length > 0)
+                                                {
+                                                    for (int placeIndex = 0; placeIndex < getPlaces(aircraftTypes[aircraftKey]).Length; placeIndex++)
+                                                    {
+                                                        if (getPlaces(aircraftTypes[aircraftKey])[placeIndex] == place)
+                                                        {
+                                                            aircraftSelections[aircraftKey].SelectArmy(aircraft.Army());
+                                                            aircraftSelections[aircraftKey].PlaceEnter(aircraft, placeIndex);
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (idle.Contains(airGroup.Name().Replace((GamePlay.gpNextMissionNumber() - 1).ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + ":", "")))
+                        {
+                            airGroup.Idle = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
     private void stopMission(Player player)
     {
-        isRunning = false;
+        isRunning = false;        
     }
 
     private void startMission(Player player)
@@ -970,13 +956,15 @@ public class Mission : AMission
                                     if (actor is AiAircraft)
                                     {
                                         AiAircraft aircraft = actor as AiAircraft;
-                                        for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
-                                        {
-                                            if (aircraft.Player(placeIndex) != null)
-                                            {
-                                                aircraft.Player(placeIndex).PlaceLeave(placeIndex);
-                                            }
-                                        }
+                                        
+                                        //for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
+                                        //{
+                                        //    if (aircraft.Player(placeIndex) != null)
+                                        //    {
+                                        //        aircraft.Player(placeIndex).PlaceLeave(placeIndex);
+                                        //    }
+                                        //}
+
                                         aircraft.Destroy();
                                     }
                                 }
