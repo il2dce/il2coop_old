@@ -28,6 +28,11 @@ using maddox.game.world;
 
 public class Mission : AMission
 {
+    private List<string> hosts = new List<string>
+    {
+        "41Sqn_Skipper",
+    };
+
     internal enum MenuID
     {
         HostMainMenu,
@@ -360,9 +365,18 @@ public class Mission : AMission
                 else
                 {
                     string missionsFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\1C SoftClub\il-2 sturmovik cliffs of dover\missions";
-                    string[] missionFileNames = Directory.GetFiles(missionsFolderPath, "*.mis", SearchOption.AllDirectories);
+                    string[] tempMissionFileNames = Directory.GetFiles(missionsFolderPath, "*.mis", SearchOption.AllDirectories);
 
-                    if (menuItemIndex - 1 + (offsets[player] * 7) < missionFileNames.Length)
+                    List<string> missionFileNames = new List<string>();
+                    foreach (string tempMissionFileName in tempMissionFileNames)
+                    {
+                        if (tempMissionFileName.EndsWith(".mis"))
+                        {
+                            missionFileNames.Add(tempMissionFileName);
+                        }
+                    }
+
+                    if (menuItemIndex - 1 + (offsets[player] * 7) < missionFileNames.Count)
                     {
                         string missionFileName = missionFileNames[menuItemIndex - 1 + (offsets[player] * 7)];
                         selectedMissionFileName = missionFileName;
@@ -526,7 +540,7 @@ public class Mission : AMission
     {
         offsets[player] = 0;
 
-        if (GamePlay.gpPlayer() != null && player == GamePlay.gpPlayer())
+        if ((GamePlay.gpPlayer() != null && player == GamePlay.gpPlayer()) || (player.Name() != null && player.Name() != "" && hosts.Contains(player.Name())))
         {
             // Set host menu.
             string[] entry = new string[] { "", "", "", "", "" };
@@ -718,13 +732,22 @@ public class Mission : AMission
     private void setSelectMissionMenu(Player player)
     {
         string missionsFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\1C SoftClub\il-2 sturmovik cliffs of dover\missions";
-        string[] missionFileNames = Directory.GetFiles(missionsFolderPath, "*.mis", SearchOption.AllDirectories);
+        string[] tempMissionFileNames = Directory.GetFiles(missionsFolderPath, "*.mis", SearchOption.AllDirectories);
+
+        List<string> missionFileNames = new List<string>();
+        foreach (string tempMissionFileName in tempMissionFileNames)
+        {
+            if (tempMissionFileName.EndsWith(".mis"))
+            {
+                missionFileNames.Add(tempMissionFileName);
+            }
+        }
 
         if (offsets[player] < 0)
         {
-            offsets[player] = (int)missionFileNames.Length / 7;            
+            offsets[player] = (int)missionFileNames.Count / 7;
         }
-        else if ((offsets[player] * 7) > missionFileNames.Length)
+        else if ((offsets[player] * 7) > missionFileNames.Count)
         {
             offsets[player] = 0;
         }
@@ -747,7 +770,7 @@ public class Mission : AMission
             }
             else
             {
-                if (entryIndex + (offsets[player] * 7) < missionFileNames.Length)
+                if (entryIndex + (offsets[player] * 7) < missionFileNames.Count)
                 {
                     entry[entryIndex] = createMissionFileDisplayName(missionFileNames[entryIndex + (offsets[player] * 7)]);
                     hasSubEntry[entryIndex] = true;
