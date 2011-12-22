@@ -10,4 +10,18 @@ Add your content here.
 
 == Host ==
 
+[http://il2coop.googlecode.com/svn/wiki/UserGuide/img/00_OrderMenuMain.png]
+
+[http://il2coop.googlecode.com/svn/wiki/UserGuide/img/01_OrderMissionMenuHostMainBeforeMissionSelection.png]
+
+[http://il2coop.googlecode.com/svn/wiki/UserGuide/img/03_OrderMissionMenuHostSelectMission.png]
+
+[http://il2coop.googlecode.com/svn/wiki/UserGuide/img/04_OrderMissionMenuHostMainAfterMissionSelection.png]
+
+[http://il2coop.googlecode.com/svn/wiki/UserGuide/img/05_OrderMissionMenuHostAircraftSelection.png]
+
+[http://il2coop.googlecode.com/svn/wiki/UserGuide/img/06_OrderMissionMenuHostMainAfterAircraftSelection.png]
+
+[http://il2coop.googlecode.com/svn/wiki/UserGuide/img/07_AfterMissionStart.png]
+
 == Client ==
