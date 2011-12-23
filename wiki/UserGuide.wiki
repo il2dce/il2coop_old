@@ -9,7 +9,7 @@ To close this cap _IL2Coop_ uses a lobby mission that allows the players to sele
 
 = Details =
 
-The lobby mission is operated by the _Mission_ menu of the _Order Menu_ which is opened by the tab key.
+To start the lobby mission the server has to load the _IL2Coop.mis_ that is contained in the download archive. The lobby mission is operated by the _Mission_ menu of the _Order Menu_ which is opened by the tab key.
 
 [http://il2coop.googlecode.com/svn/wiki/UserGuide/img/00_OrderMenuMain.png]
 
