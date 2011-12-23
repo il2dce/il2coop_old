@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+// Last change: $LastChangedDate$ 
+// Revision:    $Rev$
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -28,11 +31,13 @@ using maddox.game.world;
 
 public class Mission : AMission
 {
-    private List<string> hosts = new List<string>
+    static private const List<string> hosts = new List<string>
     {
         "41Sqn_Skipper",
     };
 
+    static private const string map = "Land$English_Channel_1940";
+    
     internal enum MenuID
     {
         HostMainMenu,
@@ -271,7 +276,28 @@ public class Mission : AMission
             return null;
         }
     }
-    
+
+    private List<string> getMissionFileNames()
+    {
+        string missionsFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\1C SoftClub\il-2 sturmovik cliffs of dover\missions";
+        string[] tempMissionFileNames = Directory.GetFiles(missionsFolderPath, "*.mis", SearchOption.AllDirectories);
+
+        List<string> missionFileNames = new List<string>();
+        foreach (string tempMissionFileName in tempMissionFileNames)
+        {
+            if (tempMissionFileName.EndsWith(".mis"))
+            {
+                ISectionFile tempMissionFile = GamePlay.gpLoadSectionFile(tempMissionFileName);
+                if (tempMissionFile.get("MAIN", "MAP") == map)
+                {
+                    missionFileNames.Add(tempMissionFileName);
+                }
+            }
+        }
+
+        return missionFileNames;
+    }
+
     public override void OnMissionLoaded(int missionNumber)
     {
         base.OnMissionLoaded(missionNumber);
@@ -364,17 +390,7 @@ public class Mission : AMission
                 }
                 else
                 {
-                    string missionsFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\1C SoftClub\il-2 sturmovik cliffs of dover\missions";
-                    string[] tempMissionFileNames = Directory.GetFiles(missionsFolderPath, "*.mis", SearchOption.AllDirectories);
-
-                    List<string> missionFileNames = new List<string>();
-                    foreach (string tempMissionFileName in tempMissionFileNames)
-                    {
-                        if (tempMissionFileName.EndsWith(".mis"))
-                        {
-                            missionFileNames.Add(tempMissionFileName);
-                        }
-                    }
+                    List<string> missionFileNames = getMissionFileNames();
 
                     if (menuItemIndex - 1 + (offsets[player] * 7) < missionFileNames.Count)
                     {
@@ -731,17 +747,7 @@ public class Mission : AMission
 
     private void setSelectMissionMenu(Player player)
     {
-        string missionsFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\1C SoftClub\il-2 sturmovik cliffs of dover\missions";
-        string[] tempMissionFileNames = Directory.GetFiles(missionsFolderPath, "*.mis", SearchOption.AllDirectories);
-
-        List<string> missionFileNames = new List<string>();
-        foreach (string tempMissionFileName in tempMissionFileNames)
-        {
-            if (tempMissionFileName.EndsWith(".mis"))
-            {
-                missionFileNames.Add(tempMissionFileName);
-            }
-        }
+        List<string> missionFileNames = getMissionFileNames();
 
         if (offsets[player] < 0)
         {
