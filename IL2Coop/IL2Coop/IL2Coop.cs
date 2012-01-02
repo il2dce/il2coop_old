@@ -70,114 +70,6 @@ public class Mission : AMission
         return aircraft.Replace("." + places[aircraft], "") + ": " + aircraftNames[aircraft] + " (" + aircraftTypes[aircraft].Replace("Aircraft.", "") + " " + places[aircraft] + ")";
     }
 
-    private string createAirGroupDisplayName(string airGroupName)
-    {
-        // Fallback
-        string airGroupDisplayName = airGroupName;
-
-        if(airGroupName.Contains("LONDON"))
-        {
-            airGroupDisplayName += "London Flying Training School";
-        }
-        else if(airGroupName.StartsWith("BoB_RAF_"))
-        {
-            if (airGroupName.Contains("FatCat"))
-            {
-                airGroupDisplayName = "FatCat Squadron RAF";
-            }
-            else
-            {
-                Match match = Regex.Match(airGroupName, @"(\d+)");
-                if (match.Success)
-                {
-                    airGroupDisplayName = "No. ";
-                    airGroupDisplayName += match.Value;
-                    airGroupDisplayName += " Squadron";
-
-                    if (airGroupName.Contains("RCAF"))
-                    {
-                        airGroupDisplayName += " RCAF";
-                    }
-                    else
-                    {
-                        airGroupDisplayName += " RAF";
-                    }
-                }
-            }
-        }
-        else if (airGroupName.StartsWith("BoB_LW_"))
-        {
-            if(airGroupName.Contains("BoB_LW_AufklGr_ObdL"))
-            {
-                airGroupDisplayName = "Aufklärungsgruppe ObdL";
-            }
-            else if(airGroupName.Contains("BoB_LW_AufklGr10"))
-            {
-                airGroupDisplayName = "Aufklärungsgruppe 10";
-            }
-            else if(airGroupName.Contains("BoB_LW_Wekusta_51"))
-            {
-                airGroupDisplayName = "Wekusta 51";
-            }
-            else if (airGroupName.Contains("BoB_LW_Wekusta_ObdL"))
-            {
-                airGroupDisplayName = "Wekusta ObdL";
-            }
-            else
-            {
-                Match match = Regex.Match(airGroupName, @"(\d+)");
-                if (match.Success)
-                {
-                    if(airGroupName.Contains("Stab"))
-                    {
-                        airGroupDisplayName = "Stab/";
-                    }
-                    else
-                    {
-                        airGroupDisplayName = "x./";
-                    }
-                                        
-                    if (airGroupName.Contains("JG"))
-                    {
-                        airGroupDisplayName += "JG";
-                    }
-                    else if (airGroupName.Contains("ZG"))
-                    {
-                        airGroupDisplayName += "ZG";
-                    }
-                    else if (airGroupName.Contains("LG"))
-                    {
-                        airGroupDisplayName += "LG";
-                    }
-                    else if (airGroupName.Contains("StG"))
-                    {
-                        airGroupDisplayName += "StG";
-                    }
-                    else if (airGroupName.Contains("KG"))
-                    {
-                        airGroupDisplayName += "KG";
-                    }
-                    else if (airGroupName.Contains("KGzbV"))
-                    {
-                        airGroupDisplayName += "KGzbV";
-                    }
-                    else if (airGroupName.Contains("AufklGr"))
-                    {
-                        airGroupDisplayName += "AufklGr";
-                    }
-
-                    airGroupDisplayName += " " + match.Value;
-                }
-            }
-        }
-        else if(airGroupName.StartsWith("BoB_RA_"))
-        {
-
-        }
-
-        return airGroupDisplayName;
-    }
-    
     private string[] getPlaces(string aircraftType)
     {
         if(aircraftType == "Aircraft.Bf-109E-1")
@@ -485,6 +377,27 @@ public class Mission : AMission
         }
     }
 
+    public override void OnPlayerArmy(Player player, int army)
+    {
+        base.OnPlayerArmy(player, army);
+
+        assignToLobbyAircraft(player);
+    }
+
+    public override void OnActorDead(int missionNumber, string shortName, AiActor actor, List<DamagerScore> damages)
+    {
+        base.OnActorDead(missionNumber, shortName, actor, damages);
+
+        assignPlayersOfActorToLobbyAircraft(actor);
+    }
+
+    public override void OnActorDestroyed(int missionNumber, string shortName, AiActor actor)
+    {
+        base.OnActorDestroyed(missionNumber, shortName, actor);
+
+        assignPlayersOfActorToLobbyAircraft(actor);
+    }
+
     public override void OnPlaceEnter(Player player, AiActor actor, int placeIndex)
     {
         base.OnPlaceEnter(player, actor, placeIndex);
@@ -492,49 +405,54 @@ public class Mission : AMission
         setMainMenu(player);
     }
 
-    public override void OnBattleStarted()
+    /// <summary>
+    /// Assigns all players that occupy a place of the actor to one of the lobby aircrafts.
+    /// </summary>
+    /// <param name="actor">The actor that might be occupied by players.</param>
+    private void assignPlayersOfActorToLobbyAircraft(AiActor actor)
     {
-        base.OnBattleStarted();
-    
-        MissionNumberListener = -1;        
-    }
-
-    public override void OnPlayerArmy(Player player, int army)
-    {
-        base.OnPlayerArmy(player, army);
-
-        if (!isRunning)
+        if (actor is AiAircraft)
         {
-            setDummyAircraft(player);
+            AiAircraft aircraft = actor as AiAircraft;
+
+            for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
+            {
+                if (aircraft.Player(placeIndex) != null)
+                {
+                    Player player = aircraft.Player(placeIndex);
+                    assignToLobbyAircraft(player);
+                }
+            }
         }
     }
-    
-    private void setDummyAircraft(Player player)
+
+    /// <summary>
+    /// Assigns a player to an unoccupied place in one of the lobby aircrafts.
+    /// </summary>
+    /// <param name="player">The player that is assigned to a lobby aircraft.</param>
+    private void assignToLobbyAircraft(Player player)
     {
-        // Place player into a dummy aircraft.
-        if (GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
+        if (GamePlay.gpAirGroups(player.Army()) != null && GamePlay.gpAirGroups(player.Army()).Length > 0)
         {
-            foreach(int armyIndex in GamePlay.gpArmies())
+            foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(player.Army()))
             {
-                if (GamePlay.gpAirGroups(armyIndex) != null && GamePlay.gpAirGroups(armyIndex).Length > 0)
+                // Lobby aircrafts always have the mission index 0.
+                if (airGroup.Name().StartsWith("0:"))
                 {
-                    foreach( AiAirGroup airGroup in GamePlay.gpAirGroups(armyIndex))
+                    if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
                     {
-                        if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
+                        foreach (AiActor actor in airGroup.GetItems())
                         {
-                            foreach(AiActor actor in airGroup.GetItems())
+                            if (actor is AiAircraft)
                             {
-                                if (actor is AiAircraft)
+                                AiAircraft aircraft = actor as AiAircraft;
+                                for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
                                 {
-                                    AiAircraft aircraft = actor as AiAircraft;
-                                    for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
+                                    if (aircraft.Player(placeIndex) == null)
                                     {
-                                        if (aircraft.Player(placeIndex) == null)
-                                        {
-                                            player.PlaceEnter(aircraft, placeIndex);
-                                            // Place found.
-                                            return;
-                                        }
+                                        player.PlaceEnter(aircraft, placeIndex);
+                                        // Place found.
+                                        return;
                                     }
                                 }
                             }
@@ -545,10 +463,14 @@ public class Mission : AMission
         }
         else
         {
-            GamePlay.gpLogServer(new Player[] { player }, "No place available.", null);
+            GamePlay.gpLogServer(new Player[] { player }, "No unoccupied place available in the lobby aircrafts.", null);
         }
     }
 
+    /// <summary>
+    /// Sets the main menu for a player.
+    /// </summary>
+    /// <param name="player">The player that gets the main menu set.</param>
     private void setMainMenu(Player player)
     {
         offsets[player] = 0;
@@ -965,40 +887,6 @@ public class Mission : AMission
         if (selectedMissionFile != null)
         {
             isRunning = true;
-
-            // Destroy all dummy aircraft.
-            if (GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
-            {
-                foreach (int armyIndex in GamePlay.gpArmies())
-                {
-                    if (GamePlay.gpAirGroups(armyIndex) != null && GamePlay.gpAirGroups(armyIndex).Length > 0)
-                    {
-                        foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(armyIndex))
-                        {
-                            if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
-                            {
-                                foreach (AiActor actor in airGroup.GetItems())
-                                {
-                                    if (actor is AiAircraft)
-                                    {
-                                        AiAircraft aircraft = actor as AiAircraft;
-                                        
-                                        //for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
-                                        //{
-                                        //    if (aircraft.Player(placeIndex) != null)
-                                        //    {
-                                        //        aircraft.Player(placeIndex).PlaceLeave(placeIndex);
-                                        //    }
-                                        //}
-
-                                        aircraft.Destroy();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
             
             // Load the selected mission file.
             GamePlay.gpPostMissionLoad(selectedMissionFile);
