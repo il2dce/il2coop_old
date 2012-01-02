@@ -28,14 +28,14 @@ using maddox.game.world;
 
 public class Mission : AMission
 {
-    static private const List<string> hosts = new List<string>
+    private List<string> hosts = new List<string>
     {
         "41Sqn_Skipper",
     };
 
-    static private const string map = "Land$English_Channel_1940";
+    private string map = "Land$English_Channel_1940";
     
-    internal enum MenuID
+    private enum MenuID
     {
         HostMainMenu,
         ClientMainMenu,
