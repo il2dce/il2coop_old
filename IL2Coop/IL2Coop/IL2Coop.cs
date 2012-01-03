@@ -401,6 +401,8 @@ public class Mission : AMission
                                 }
 
                                 mission.AircraftPlaceSelections[aircraftPlaces[menuItemIndex - 1 + (menuOffsets[player] * 7)]] = player;
+                                placePlayer(player);
+                                
                                 GamePlay.gpLogServer(new Player[] { player }, "Aircraft selected: " + aircraftPlaceDisplayNames[menuItemIndex - 1 + (menuOffsets[player] * 7)], null);
 
                                 setMainMenu(player);
@@ -883,21 +885,48 @@ public class Mission : AMission
         GamePlay.gpPostMissionLoad(missionFile);
     }
 
+    private void placePlayer(Player player)
+    {
+        if (missionSelections.ContainsKey(player))
+        {
+            CoopMission mission = missionSelections[player];
+
+            foreach (string aircraftSelection in mission.AircraftPlaceSelections.Keys)
+            {
+                if (mission.AircraftPlaceSelections[aircraftSelection] == player)
+                {
+                    string aircraftName = aircraftSelection.Remove(aircraftSelection.IndexOf("@"), aircraftSelection.Length - aircraftSelection.IndexOf("@"));
+                    string place = aircraftSelection.Replace(aircraftName + "@", "");
+                    int placeIndex;
+                    if (int.TryParse(place, out placeIndex))
+                    {
+                        AiActor actor = GamePlay.gpActorByName(mission.MissionNumber.ToString() + ":" + aircraftName);
+                        if (actor is AiAircraft)
+                        {
+                            AiAircraft aircraft = actor as AiAircraft;
+                            mission.AircraftPlaceSelections[aircraftSelection].PlaceEnter(aircraft, placeIndex);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private void placePlayers(int missionNumber)
     {
         foreach (CoopMission mission in missions)
         {
             if (mission.MissionNumber == missionNumber)
             {
-                foreach(string aircraftSelection in mission.AircraftPlaceSelections.Keys)
+                foreach (string aircraftSelection in mission.AircraftPlaceSelections.Keys)
                 {
-                    string aircraftName = aircraftSelection.Remove(aircraftSelection.IndexOf("@"), aircraftSelection.IndexOf("@") - aircraftSelection.Length);
+                    string aircraftName = aircraftSelection.Remove(aircraftSelection.IndexOf("@"), aircraftSelection.Length - aircraftSelection.IndexOf("@"));
                     string place = aircraftSelection.Replace(aircraftName + "@", "");
                     int placeIndex;
-                    if(int.TryParse(place, out placeIndex))
+                    if (int.TryParse(place, out placeIndex))
                     {
                         AiActor actor = GamePlay.gpActorByName(missionNumber.ToString() + ":" + aircraftName);
-                        if(actor is AiAircraft)
+                        if (actor is AiAircraft)
                         {
                             AiAircraft aircraft = actor as AiAircraft;
                             mission.AircraftPlaceSelections[aircraftSelection].PlaceEnter(aircraft, placeIndex);
