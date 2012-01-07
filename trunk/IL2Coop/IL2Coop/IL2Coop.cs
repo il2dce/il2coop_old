@@ -112,6 +112,15 @@ public class Mission : AMission
             }
         }
         Dictionary<string, Player> aircraftPlaceSelections = new Dictionary<string, Player>();
+
+        public List<AiActor> AiActors
+        {
+            get
+            {
+                return this.aiActors;
+            }
+        }
+        List<AiActor> aiActors;
     }
 
     List<CoopMission> missions = new List<CoopMission>();
@@ -252,6 +261,8 @@ public class Mission : AMission
                         });
                     }
                 }
+
+                mission.AiActors.Add(actor);
             }
         }
     }
@@ -486,13 +497,6 @@ public class Mission : AMission
         base.OnPlayerArmy(player, army);
 
         assignToLobbyAircraft(player);
-    }
-
-    public override void OnActorDead(int missionNumber, string shortName, AiActor actor, List<DamagerScore> damages)
-    {
-        base.OnActorDead(missionNumber, shortName, actor, damages);
-
-        assignPlayersOfActorToLobbyAircraft(actor);
     }
 
     public override void OnActorDestroyed(int missionNumber, string shortName, AiActor actor)
@@ -860,6 +864,15 @@ public class Mission : AMission
 
     private void preloadMission(CoopMission mission)
     {
+        foreach (AiActor actor in mission.AiActors)
+        {
+            if (actor is AiCart)
+            {
+                (actor as AiCart).Destroy();
+            }
+        }
+        mission.AiActors.Clear();
+
         ISectionFile preloadMissionFile = GamePlay.gpLoadSectionFile(mission.MissionFileName);
 
         for (int airGroupIndex = 0; airGroupIndex < preloadMissionFile.lines("AirGroups"); airGroupIndex++)
@@ -921,33 +934,14 @@ public class Mission : AMission
 
     private void loadMission(CoopMission mission)
     {
-        // Destroy preloaded aircraft.
-        if(GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
+        foreach (AiActor actor in mission.AiActors)
         {
-            foreach (int army in GamePlay.gpArmies())
+            if (actor is AiCart)
             {
-                if (GamePlay.gpAirGroups(army) != null && GamePlay.gpAirGroups(army).Length > 0)
-                {
-                    foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(army))
-                    {
-                        if (airGroup.Name().StartsWith(mission.MissionNumber + ":"))
-                        {
-                            if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
-                            {
-                                foreach (AiActor actor in airGroup.GetItems())
-                                {
-                                    if (actor is AiAircraft)
-                                    {
-                                        AiAircraft aircraft = actor as AiAircraft;
-                                        aircraft.Destroy();
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                (actor as AiCart).Destroy();
             }
         }
+        mission.AiActors.Clear();
 
         // Set air groups to idle by editing the mission file.
         ISectionFile missionFile = GamePlay.gpLoadSectionFile(mission.MissionFileName);
