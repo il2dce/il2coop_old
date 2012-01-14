@@ -52,6 +52,13 @@
     <Reference Include="maddox">
       <HintPath>C:\Program Files (x86)\Steam\SteamApps\common\il-2 sturmovik cliffs of dover\parts\core\maddox.dll</HintPath>
     </Reference>
+    <Reference Include="part, Version=1.0.0.0, Culture=neutral, PublicKeyToken=8b6839725e48404f, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\il-2 sturmovik cliffs of dover\parts\core\part.dll</HintPath>
+    </Reference>
+    <Reference Include="partBob">
+      <HintPath>..\..\..\..\..\..\..\..\..\..\Program Files (x86)\Steam\steamapps\common\il-2 sturmovik cliffs of dover\parts\bob\partBob.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
