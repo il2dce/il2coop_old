@@ -1116,6 +1116,8 @@ public class Mission : AMission
             preloadMissionFile.set(airGroupKey, "SpawnFromScript", false);
             preloadMissionFile.set(airGroupKey, "Fuel", 0);
 
+            List<string> waypointKeys = new List<string>();
+            List<string> waypointValues = new List<string>();
             if (preloadMissionFile.lines(airGroupKey + "_Way") > 0)
             {
                 string waypointKey;
@@ -1123,7 +1125,52 @@ public class Mission : AMission
                 preloadMissionFile.get(airGroupKey + "_Way", 0, out waypointKey, out waypointValue);
                 if (waypointKey != "TAKEOFF")
                 {
-                    // TODO: Handle airstart.                    
+                    // Handle airstart.
+                    preloadMissionFile.set(airGroupKey, "SetOnPark", false);
+
+                    string[] values = waypointValue.Split(' ');
+                    maddox.GP.Point3d position = new maddox.GP.Point3d(double.Parse(values[0]), double.Parse(values[1]), 0.0);
+
+                    AiAirport closestAirport = null;
+                    if (GamePlay.gpAirports() != null && GamePlay.gpAirports().Length > 0)
+                    {
+                        foreach (AiAirport airport in GamePlay.gpAirports())
+                        {
+                            if (closestAirport == null)
+                            {
+                                closestAirport = airport;
+                            }
+                            else
+                            {
+                                if (closestAirport.Pos().distance(ref position) < airport.Pos().distance(ref position)
+                                    && (closestAirport.QueueLanding() == null || closestAirport.QueueLanding().Length == 0)
+                                    && (closestAirport.QueueTakeoff() == null || closestAirport.QueueTakeoff().Length == 0))
+                                {
+                                    closestAirport = airport;
+                                }
+                            }
+                        }
+
+                        if (closestAirport != null)
+                        {
+                            waypointKeys.Add("TAKEOFF");
+                            waypointValues.Add(closestAirport.Pos().x.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + " " + closestAirport.Pos().y.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + " 0 0");
+                        }
+
+                        for (int waypointIndex = 0; waypointIndex < preloadMissionFile.lines(airGroupKey + "_Way"); waypointIndex++)
+                        {
+                            preloadMissionFile.get(airGroupKey + "_Way", waypointIndex, out waypointKey, out waypointValue);
+                            waypointKeys.Add(waypointKey);
+                            waypointValues.Add(waypointValue);
+                        }
+                    }
+
+                    preloadMissionFile.delete(airGroupKey + "_Way");
+
+                    for (int waypointIndex = 0; waypointIndex < waypointKeys.Count; waypointIndex++)
+                    {
+                        preloadMissionFile.add(airGroupKey + "_Way", waypointKeys[waypointIndex], waypointValues[waypointIndex]);
+                    }
                 }
             }
 
