@@ -30,8 +30,8 @@ public class Mission : AMission
 {
     #region Settings
 
-    private int missionPendingTime = 5 * 60;
-    private int missionCycleTime = 10 * 60;
+    private int missionPendingTime = 1 * 60;
+    private int missionCycleTime = 2 * 60;
     private int missionDuration = 60 * 60;
     private bool forceRandom = true;
 
@@ -43,7 +43,7 @@ public class Mission : AMission
     /// </remarks>
     private List<string> hostPlayers = new List<string>
     {
-        "41Sqn_Skipper",
+        //"41Sqn_Skipper",
     };
 
     /// <summary>
@@ -847,10 +847,10 @@ public class Mission : AMission
 
                 entry[0] = "Select Mission (Selected Mission: " + mission.DisplayName + ")";
                 entry[1] = "Select Aircraft (Selected Aircraft: " + aircraftPlaceDisplyName + ")";
-                entry[2] = "Players";
-
-                GamePlay.gpSetOrderMissionMenu(player, false, (int)MainMenuID.ClientMainMenu, entry, hasSubEntry);
+                entry[2] = "Players";                
             }
+
+            GamePlay.gpSetOrderMissionMenu(player, false, (int)MainMenuID.ClientMainMenu, entry, hasSubEntry);
         }
     }
 
