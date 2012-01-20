@@ -28,18 +28,44 @@ using maddox.game.world;
 
 public class Mission : AMission
 {
+    #region Settings
+
+    private int missionPendingTime = 5 * 60;
+    private int missionCycleTime = 10 * 60;
+    private int missionDuration = 60 * 60;
+    private bool forceRandom = true;
+
     /// <summary>
     /// The names of the players that have hosting permissions.
     /// </summary>
+    /// <remarks>
+    /// Add the names of the player that have admin rights.
+    /// </remarks>
     private List<string> hostPlayers = new List<string>
     {
         "41Sqn_Skipper",
     };
 
     /// <summary>
-    /// The name of the map of the lobby mission. Only missions that stage on the same map can be loaded from the lobby mission.
+    /// The sub folder that contains the available missions. 
     /// </summary>
+    /// <remarks>
+    /// The folder must be below "C:\Users\*username*\Documents\1C SoftClub\il-2 sturmovik cliffs of dover\missions". 
+    /// </remarks>
+    /// <example>
+    /// Set "" to make all missions available.
+    /// </example>    
+    private const string missionsSubFolder =  @"\Custom\Server\Kanalkampf";
+
+    /// <summary>
+    /// The name of the map of the lobby mission. 
+    /// </summary>
+    /// <remarks>
+    /// Only missions that stage on the same map can be loaded from the lobby mission.
+    /// </remarks>
     private string mapName = "Land$English_Channel_1940";
+    
+    #endregion
     
     /// <summary>
     /// The ids of the different OrderMissionMenus.
@@ -135,20 +161,19 @@ public class Mission : AMission
         List<AiActor> aiActors = new List<AiActor>();
     }
 
-    List<CoopMission> missions = new List<CoopMission>();
-    
-    Dictionary<Player, CoopMission> missionSelections = new Dictionary<Player, CoopMission>();
-    
+    private Random rand = new Random();
+    private List<CoopMission> missions = new List<CoopMission>();
+    private Dictionary<Player, CoopMission> missionSelections = new Dictionary<Player, CoopMission>();
     private Dictionary<Player, int> menuOffsets = new Dictionary<Player, int>();
-
+    
     private static string createMissionFileDisplayName(string missionFileName)
     {
-        return missionFileName.Replace(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\1C SoftClub\il-2 sturmovik cliffs of dover\missions", "");
+        return missionFileName.Replace(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\1C SoftClub\il-2 sturmovik cliffs of dover\missions" + missionsSubFolder, "");
     }
 
     private List<string> getMissionFileNames()
     {
-        string missionsFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\1C SoftClub\il-2 sturmovik cliffs of dover\missions";
+        string missionsFolderPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments) + @"\1C SoftClub\il-2 sturmovik cliffs of dover\missions" + missionsSubFolder;
         string[] tempMissionFileNames = Directory.GetFiles(missionsFolderPath, "*.mis", SearchOption.AllDirectories);
 
         List<string> missionFileNames = new List<string>();
@@ -301,6 +326,48 @@ public class Mission : AMission
         base.OnBattleStarted();
 
         MissionNumberListener = -1;
+
+        //if (GamePlay.gpIsServerDedicated() == true || forceRandom)
+        {
+            openRandomMission();
+        }
+    }
+
+    private void openRandomMission()
+    {
+        List<string> missionFileNames = getMissionFileNames();
+        int missionFileIndex = rand.Next(0, missionFileNames.Count);
+        string missionFileName = missionFileNames[missionFileIndex];
+        CoopMission coopMission = new CoopMission(missionFileName);
+        missions.Add(coopMission);
+        openMission(coopMission);
+
+        List<Player> players = new List<Player>();
+        if (GamePlay.gpPlayer() != null)
+        {
+            players.Add(GamePlay.gpPlayer());
+        }
+        if (GamePlay.gpRemotePlayers() != null && GamePlay.gpRemotePlayers().Length > 0)
+        {
+            players.AddRange(GamePlay.gpRemotePlayers());
+        }
+
+        GamePlay.gpLogServer(players.ToArray(), "New random mission.", null);
+        
+        Timeout(missionPendingTime, () =>
+        {
+            startMission(coopMission);
+        });
+
+        Timeout(missionDuration, () =>
+        {
+            closeMission(coopMission);
+        });
+
+        Timeout(missionCycleTime, () =>
+        {
+            openRandomMission();
+        });
     }
 
     public override void OnActorCreated(int missionNumber, string shortName, AiActor actor)
@@ -1114,7 +1181,7 @@ public class Mission : AMission
 
             preloadMissionFile.set(airGroupKey, "Idle", true);
             preloadMissionFile.set(airGroupKey, "SpawnFromScript", false);
-            preloadMissionFile.set(airGroupKey, "Fuel", 0);
+            preloadMissionFile.set(airGroupKey, "Fuel", 1);
 
             List<string> waypointKeys = new List<string>();
             List<string> waypointValues = new List<string>();
