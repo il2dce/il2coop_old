@@ -327,7 +327,7 @@ public class Mission : AMission
 
         MissionNumberListener = -1;
 
-        //if (GamePlay.gpIsServerDedicated() == true || forceRandom)
+        if (GamePlay.gpIsServerDedicated() == true || forceRandom == true)
         {
             openRandomMission();
         }
