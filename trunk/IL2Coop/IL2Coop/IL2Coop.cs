@@ -25,16 +25,14 @@ using maddox.game;
 using maddox.game.world;
 
 //$debug
-//$reference parts/core/gamePlay.dll
 
-[Serializable]
 public class Mission : AMission
 {
     #region Settings
 
-    private int missionPendingTime = 5 * 60;
-    private int missionCycleTime = 15 * 60;
-    private int missionDuration = 60 * 60;
+    private int missionPendingTime = 5;
+    private int missionCycleTime = 15;
+    private int missionDuration = 60;
     private bool forceRandom = true;
 
     /// <summary>
@@ -356,17 +354,17 @@ public class Mission : AMission
 
         GamePlay.gpLogServer(players.ToArray(), "New random mission.", null);
         
-        Timeout(missionPendingTime, () =>
+        Timeout((missionPendingTime * 60), () =>
         {
             startMission(coopMission);
         });
 
-        Timeout(missionDuration, () =>
+        Timeout((missionDuration * 60), () =>
         {
             closeMission(coopMission);
         });
 
-        Timeout(missionCycleTime, () =>
+        Timeout((missionCycleTime * 60), () =>
         {
             openRandomMission();
         });
