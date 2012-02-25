@@ -25,6 +25,7 @@ using maddox.game;
 using maddox.game.world;
 
 //$debug
+//$reference parts/core/gamePlay.dll
 
 public class Mission : AMission
 {
@@ -33,7 +34,7 @@ public class Mission : AMission
     private int missionPendingTime = 5;
     private int missionCycleTime = 15;
     private int missionDuration = 60;
-    private bool forceRandom = true;
+    private bool forceRandom = false;
 
     /// <summary>
     /// The names of the players that have hosting permissions.
@@ -195,32 +196,84 @@ public class Mission : AMission
     private List<string> getAircraftPlaceDisplayNames(Player player)
     {
         List<string> aircraftPlaceDisplayNames = new List<string>();
-
+        
         if(missionSelections.ContainsKey(player))
         {
             CoopMission mission = missionSelections[player];
-            
-            if (GamePlay.gpAirGroups(player.Army()) != null && GamePlay.gpAirGroups(player.Army()).Length > 0)
+
+            if (mission.State == CoopMission.MissionState.Pending)
             {
-                foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(player.Army()))
+                ISectionFile selectedMissionFile = GamePlay.gpLoadSectionFile(mission.MissionFileName);
+
+                for (int airGroupIndex = 0; airGroupIndex < selectedMissionFile.lines("AirGroups"); airGroupIndex++)
                 {
-                    if (airGroup.Name().StartsWith(mission.MissionNumber + ":"))
+                    string key;
+                    string value;
+                    selectedMissionFile.get("AirGroups", airGroupIndex, out key, out value);
+
+                    string aircraftType = selectedMissionFile.get(key, "Class");
+
+                    // Remove the flight mask
+                    string airGroupName = key.Substring(0, key.Length - 1);
+
+                    for (int flightIndex = 0; flightIndex < 4; flightIndex++)
                     {
-                        if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
+                        if (selectedMissionFile.exist(key, "Flight" + flightIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat)))
                         {
-                            foreach (AiActor actor in airGroup.GetItems())
+                            string acNumberLine = selectedMissionFile.get(key, "Flight" + flightIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat));
+                            string[] acNumberList = acNumberLine.Split(new char[] { ' ' });
+                            if (acNumberList != null && acNumberList.Length > 0)
                             {
-                                if (actor is AiAircraft)
+                                for (int aircraftIndex = 0; aircraftIndex < acNumberList.Length; aircraftIndex++)
                                 {
-                                    AiAircraft aircraft = actor as AiAircraft;
-                                    if (aircraft.Places() > 0)
+                                    string aircraft = airGroupName + flightIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + aircraftIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
+
+                                    if (getPlaces(aircraftType) != null)
                                     {
-                                        for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
+                                        int placeIndex = 0;
+                                        foreach (string place in getPlaces(aircraftType))
                                         {
-                                            if (aircraft.ExistCabin(placeIndex))
+                                            string aircraftPlaceDisplayName = key + " " + aircraftType + " " + place;
+                                            placeIndex++;
+                                            aircraftPlaceDisplayNames.Add(aircraftPlaceDisplayName);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (mission.State == CoopMission.MissionState.Running)
+            {
+                if (GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
+                {
+                    foreach (int armyIndex in GamePlay.gpArmies())
+                    {
+                        if (GamePlay.gpAirGroups(armyIndex) != null && GamePlay.gpAirGroups(armyIndex).Length > 0)
+                        {
+                            foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(armyIndex))
+                            {
+                                if (airGroup.Name().StartsWith(mission.MissionNumber + ":"))
+                                {
+                                    if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
+                                    {
+                                        foreach (AiActor actor in airGroup.GetItems())
+                                        {
+                                            if (actor is AiAircraft)
                                             {
-                                                string aircraftPlaceDisplayName = aircraft.Name() + " " + aircraft.TypedName() + " | " + aircraft.InternalTypeName() + " " + aircraft.CrewFunctionPlace(placeIndex).ToString();
-                                                aircraftPlaceDisplayNames.Add(aircraftPlaceDisplayName);
+                                                AiAircraft aircraft = actor as AiAircraft;
+                                                if (aircraft.Places() > 0)
+                                                {
+                                                    for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
+                                                    {
+                                                        if (aircraft.ExistCabin(placeIndex))
+                                                        {
+                                                            string aircraftPlaceDisplayName = airGroup.Name().Replace(mission.MissionNumber + ":", "") + " " + aircraft.InternalTypeName() + " " + aircraft.CrewFunctionPlace(placeIndex).ToString();
+                                                            aircraftPlaceDisplayNames.Add(aircraftPlaceDisplayName);
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -241,28 +294,82 @@ public class Mission : AMission
         {
             CoopMission mission = missionSelections[player];
 
-            if (GamePlay.gpAirGroups(player.Army()) != null && GamePlay.gpAirGroups(player.Army()).Length > 0)
+            if (mission.State == CoopMission.MissionState.Pending)
             {
-                foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(player.Army()))
+                ISectionFile selectedMissionFile = GamePlay.gpLoadSectionFile(mission.MissionFileName);
+
+                for (int airGroupIndex = 0; airGroupIndex < selectedMissionFile.lines("AirGroups"); airGroupIndex++)
                 {
-                    if (airGroup.Name().StartsWith(mission.MissionNumber + ":"))
+                    string key;
+                    string value;
+                    selectedMissionFile.get("AirGroups", airGroupIndex, out key, out value);
+
+                    string aircraftType = selectedMissionFile.get(key, "Class");
+
+                    // Remove the flight mask
+                    string airGroupName = key.Substring(0, key.Length - 1);
+
+                    for (int flightIndex = 0; flightIndex < 4; flightIndex++)
                     {
-                        if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
+                        if (selectedMissionFile.exist(key, "Flight" + flightIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat)))
                         {
-                            foreach (AiActor actor in airGroup.GetItems())
+                            string acNumberLine = selectedMissionFile.get(key, "Flight" + flightIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat));
+                            string[] acNumberList = acNumberLine.Split(new char[] { ' ' });
+                            if (acNumberList != null && acNumberList.Length > 0)
                             {
-                                if (actor is AiAircraft)
+                                for (int aircraftIndex = 0; aircraftIndex < acNumberList.Length; aircraftIndex++)
                                 {
-                                    AiAircraft aircraft = actor as AiAircraft;
-                                    if (aircraft.Places() > 0)
+                                    string aircraft = airGroupName + flightIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + aircraftIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
+
+                                    if (getPlaces(aircraftType) != null)
                                     {
-                                        for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
+                                        uint placeIndex = 0;
+                                        foreach (string place in getPlaces(aircraftType))
                                         {
-                                            if (aircraft.ExistCabin(placeIndex))
+                                            if (aircraftPlace == aircraft + "@" + placeIndex)
                                             {
-                                                if (aircraftPlace == aircraft.Name().Replace(mission.MissionNumber + ":", "") + "@" + placeIndex)
+                                                return key + " " + aircraftType + " " + place;
+                                            }
+                                            placeIndex++;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (mission.State == CoopMission.MissionState.Running)
+            {
+                if (GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
+                {
+                    foreach (int armyIndex in GamePlay.gpArmies())
+                    {
+                        if (GamePlay.gpAirGroups(armyIndex) != null && GamePlay.gpAirGroups(armyIndex).Length > 0)
+                        {
+                            foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(armyIndex))
+                            {
+                                if (airGroup.Name().StartsWith(mission.MissionNumber + ":"))
+                                {
+                                    if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
+                                    {
+                                        foreach (AiActor actor in airGroup.GetItems())
+                                        {
+                                            if (actor is AiAircraft)
+                                            {
+                                                AiAircraft aircraft = actor as AiAircraft;
+                                                if (aircraft.Places() > 0)
                                                 {
-                                                    return aircraft.Name() + " " + aircraft.TypedName() + " | " + aircraft.InternalTypeName() + " " + aircraft.CrewFunctionPlace(placeIndex).ToString();
+                                                    for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
+                                                    {
+                                                        if (aircraft.ExistCabin(placeIndex))
+                                                        {
+                                                            if (aircraftPlace == aircraft.Name().Replace(mission.MissionNumber + ":", "") + "@" + placeIndex)
+                                                            {
+                                                                return airGroup.Name().Replace(mission.MissionNumber + ":", "") + " " + aircraft.InternalTypeName().Replace("bob:", "") + " " + aircraft.CrewFunctionPlace(placeIndex).ToString();
+                                                            }
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -282,31 +389,83 @@ public class Mission : AMission
     {
         List<string> aircraftPlaces = new List<string>();
 
-        if(missionSelections.ContainsKey(player))
+        if (missionSelections.ContainsKey(player))
         {
             CoopMission mission = missionSelections[player];
 
-            if (GamePlay.gpAirGroups(player.Army()) != null && GamePlay.gpAirGroups(player.Army()).Length > 0)
+            if (mission.State == CoopMission.MissionState.Pending)
             {
-                foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(player.Army()))
+                ISectionFile selectedMissionFile = GamePlay.gpLoadSectionFile(mission.MissionFileName);
+
+                for (int airGroupIndex = 0; airGroupIndex < selectedMissionFile.lines("AirGroups"); airGroupIndex++)
                 {
-                    if (airGroup.Name().StartsWith(mission.MissionNumber + ":"))
+                    string key;
+                    string value;
+                    selectedMissionFile.get("AirGroups", airGroupIndex, out key, out value);
+
+                    string aircraftType = selectedMissionFile.get(key, "Class");
+
+                    // Remove the flight mask
+                    string airGroupName = key.Substring(0, key.Length - 1);
+
+                    for (int flightIndex = 0; flightIndex < 4; flightIndex++)
                     {
-                        if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
+                        if (selectedMissionFile.exist(key, "Flight" + flightIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat)))
                         {
-                            foreach (AiActor actor in airGroup.GetItems())
+                            string acNumberLine = selectedMissionFile.get(key, "Flight" + flightIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat));
+                            string[] acNumberList = acNumberLine.Split(new char[] { ' ' });
+                            if (acNumberList != null && acNumberList.Length > 0)
                             {
-                                if (actor is AiAircraft)
+                                for (int aircraftIndex = 0; aircraftIndex < acNumberList.Length; aircraftIndex++)
                                 {
-                                    AiAircraft aircraft = actor as AiAircraft;
-                                    if (aircraft.Places() > 0)
+                                    string aircraft = airGroupName + flightIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + aircraftIndex.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat);
+
+                                    if (getPlaces(aircraftType) != null)
                                     {
-                                        for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
+                                        uint placeIndex = 0;
+                                        foreach (string place in getPlaces(aircraftType))
                                         {
-                                            if (aircraft.ExistCabin(placeIndex))
+                                            string aircraftPlace = aircraft + "@" + placeIndex;
+                                            placeIndex++;
+                                            aircraftPlaces.Add(aircraftPlace);                                            
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (mission.State == CoopMission.MissionState.Running)
+            {
+                if (GamePlay.gpArmies() != null && GamePlay.gpArmies().Length > 0)
+                {
+                    foreach (int armyIndex in GamePlay.gpArmies())
+                    {
+                        if (GamePlay.gpAirGroups(armyIndex) != null && GamePlay.gpAirGroups(armyIndex).Length > 0)
+                        {
+                            foreach (AiAirGroup airGroup in GamePlay.gpAirGroups(armyIndex))
+                            {
+                                if (airGroup.Name().StartsWith(mission.MissionNumber + ":"))
+                                {
+                                    if (airGroup.GetItems() != null && airGroup.GetItems().Length > 0)
+                                    {
+                                        foreach (AiActor actor in airGroup.GetItems())
+                                        {
+                                            if (actor is AiAircraft)
                                             {
-                                                string aircraftPlace = aircraft.Name().Replace(mission.MissionNumber + ":", "") + "@" + placeIndex;
-                                                aircraftPlaces.Add(aircraftPlace);
+                                                AiAircraft aircraft = actor as AiAircraft;
+                                                if (aircraft.Places() > 0)
+                                                {
+                                                    for (int placeIndex = 0; placeIndex < aircraft.Places(); placeIndex++)
+                                                    {
+                                                        if (aircraft.ExistCabin(placeIndex))
+                                                        {
+                                                            string aircraftPlace = aircraft.Name().Replace(mission.MissionNumber + ":", "") + "@" + placeIndex;
+                                                            aircraftPlaces.Add(aircraftPlace);
+                                                        }
+                                                    }
+                                                }
                                             }
                                         }
                                     }
@@ -320,7 +479,7 @@ public class Mission : AMission
 
         return aircraftPlaces;
     }
-
+    
     public override void OnBattleStarted()
     {
         base.OnBattleStarted();
@@ -330,6 +489,19 @@ public class Mission : AMission
         if (GamePlay.gpIsServerDedicated() == true || forceRandom == true)
         {
             openRandomMission();
+        }
+
+        if (GamePlay is GameDef)
+        {
+            string homeFolder = (GamePlay as GameDef).gameInterface.ToFileSystemPath("$home");
+            string userFolder = (GamePlay as GameDef).gameInterface.ToFileSystemPath("$user");
+
+            GamePlay.gpLogServer(new Player[] { GamePlay.gpPlayer() }, "$home: " + homeFolder, null);
+            GamePlay.gpLogServer(new Player[] { GamePlay.gpPlayer() }, "$home: " + homeFolder, null);
+        }
+        else
+        {
+            GamePlay.gpLogServer(new Player[] { GamePlay.gpPlayer() }, "Can't cast GamePlay to GameDef.", null);
         }
     }
 
@@ -1166,91 +1338,105 @@ public class Mission : AMission
 
         GamePlay.gpSetOrderMissionMenu(player, true, (int)MainMenuID.StartMissionMenu, entry, hasSubEntry);
     }
-    
+
+    private string[] getPlaces(string aircraftType)
+    {
+        if (aircraftType == "Aircraft.Bf-109E-1")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.Bf-109E-3")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.Bf-109E-3B")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.Bf-109E-4")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.Bf-109E-4B")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.G50")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.SpitfireMkI_Heartbreaker")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.HurricaneMkI_dH5-20")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.HurricaneMkI")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.SpitfireMkI")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.SpitfireMkIa")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.SpitfireMkIIa")
+        {
+            return new string[] { "Pilot" };
+        }
+        else if (aircraftType == "Aircraft.Ju-87B-2")
+        {
+            return new string[] { "Pilot", "Gunner" };
+        }
+        else if (aircraftType == "Aircraft.Bf-110C-4")
+        {
+            return new string[] { "Pilot", "Gunner" };
+        }
+        else if (aircraftType == "Aircraft.Bf-110C-7")
+        {
+            return new string[] { "Pilot", "Gunner" };
+        }
+        else if (aircraftType == "Aircraft.Bf-110C-7")
+        {
+            return new string[] { "Pilot", "Gunner" };
+        }
+        else if (aircraftType == "Aircraft.DH82A")
+        {
+            return new string[] { "Pilot", "Co-Pilot" };
+        }
+        else if (aircraftType == "Aircraft.BlenheimMkIV")
+        {
+            return new string[] { "Pilot", "Bombardier", "Gunner" };
+        }
+        else if (aircraftType == "Aircraft.BR-20M")
+        {
+            return new string[] { "Pilot", "Co-Pilot", "Bombardier", "Nose Gunner", "Top Gunner", "Observer" };
+        }
+        else if (aircraftType == "Aircraft.Ju-88A-1")
+        {
+            return new string[] { "Pilot", "Bombardier", "Nose Gunner", "Top Gunner", "Ventral Gunner" };
+        }
+        else if (aircraftType == "Aircraft.He-111H-2")
+        {
+            return new string[] { "Pilot", "Bombardier", "Nose Gunner Down", "Nose Gunner Up", "Top Gunner", "Ventral Gunner", "Waist Gunner Left", "Waist Gunner Right" };
+        }
+        else if (aircraftType == "Aircraft.He-111P-2")
+        {
+            return new string[] { "Pilot", "Bombardier", "Nose Gunner", "Top Gunner", "Ventral Gunner", "Waist Gunner Left", "Waist Gunner Right" };
+        }
+        else
+        {
+            return null;
+        }
+    }
+
     private void openMission(CoopMission mission)
     {
-        removeActors(mission);
-
-        ISectionFile preloadMissionFile = GamePlay.gpLoadSectionFile(mission.MissionFileName);
-
-        for (int airGroupIndex = 0; airGroupIndex < preloadMissionFile.lines("AirGroups"); airGroupIndex++)
-        {
-            string airGroupKey;
-            string value;
-            preloadMissionFile.get("AirGroups", airGroupIndex, out airGroupKey, out value);
-
-            preloadMissionFile.set(airGroupKey, "Idle", true);
-            preloadMissionFile.set(airGroupKey, "SpawnFromScript", false);
-            preloadMissionFile.set(airGroupKey, "Fuel", 1);
-
-            List<string> waypointKeys = new List<string>();
-            List<string> waypointValues = new List<string>();
-            if (preloadMissionFile.lines(airGroupKey + "_Way") > 0)
-            {
-                string waypointKey;
-                string waypointValue;
-                preloadMissionFile.get(airGroupKey + "_Way", 0, out waypointKey, out waypointValue);
-                if (waypointKey != "TAKEOFF")
-                {
-                    // Handle airstart.
-                    preloadMissionFile.set(airGroupKey, "SetOnPark", false);
-
-                    string[] values = waypointValue.Split(' ');
-                    maddox.GP.Point3d position = new maddox.GP.Point3d(double.Parse(values[0]), double.Parse(values[1]), 0.0);
-
-                    AiAirport closestAirport = null;
-                    if (GamePlay.gpAirports() != null && GamePlay.gpAirports().Length > 0)
-                    {
-                        foreach (AiAirport airport in GamePlay.gpAirports())
-                        {
-                            if (closestAirport == null)
-                            {
-                                closestAirport = airport;
-                            }
-                            else
-                            {
-                                if (closestAirport.Pos().distance(ref position) < airport.Pos().distance(ref position)
-                                    && (closestAirport.QueueLanding() == null || closestAirport.QueueLanding().Length == 0)
-                                    && (closestAirport.QueueTakeoff() == null || closestAirport.QueueTakeoff().Length == 0))
-                                {
-                                    closestAirport = airport;
-                                }
-                            }
-                        }
-
-                        if (closestAirport != null)
-                        {
-                            waypointKeys.Add("TAKEOFF");
-                            waypointValues.Add(closestAirport.Pos().x.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + " " + closestAirport.Pos().y.ToString(System.Globalization.CultureInfo.InvariantCulture.NumberFormat) + " 0 0");
-                        }
-
-                        for (int waypointIndex = 0; waypointIndex < preloadMissionFile.lines(airGroupKey + "_Way"); waypointIndex++)
-                        {
-                            preloadMissionFile.get(airGroupKey + "_Way", waypointIndex, out waypointKey, out waypointValue);
-                            waypointKeys.Add(waypointKey);
-                            waypointValues.Add(waypointValue);
-                        }
-                    }
-
-                    preloadMissionFile.delete(airGroupKey + "_Way");
-
-                    for (int waypointIndex = 0; waypointIndex < waypointKeys.Count; waypointIndex++)
-                    {
-                        preloadMissionFile.add(airGroupKey + "_Way", waypointKeys[waypointIndex], waypointValues[waypointIndex]);
-                    }
-                }
-            }
-
-            preloadMissionFile.delete("PARTS");
-            preloadMissionFile.delete("MAIN");
-            preloadMissionFile.delete("Stationary");
-            preloadMissionFile.delete("Buildings");
-            preloadMissionFile.delete("Chiefs");
-        }
-
-        mission.MissionNumber = GamePlay.gpNextMissionNumber();
-        GamePlay.gpPostMissionLoad(preloadMissionFile);
-
         mission.State = CoopMission.MissionState.Pending;
     }
 
