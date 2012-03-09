@@ -25,7 +25,6 @@ using maddox.game;
 using maddox.game.world;
 
 //$debug
-//$reference parts/core/gamePlay.dll
 
 public class Mission : AMission
 {
@@ -56,7 +55,7 @@ public class Mission : AMission
     /// <example>
     /// Set "" to make all missions available.
     /// </example>    
-    private const string missionsSubFolder =  @"\Custom\Server\Kanalkampf";
+	private const string missionsSubFolder =  @""; // e.g. "\Custom\Server\Kanalkampf"
 
     /// <summary>
     /// The name of the map of the lobby mission. 
@@ -489,19 +488,6 @@ public class Mission : AMission
         if (GamePlay.gpIsServerDedicated() == true || forceRandom == true)
         {
             openRandomMission();
-        }
-
-        if (GamePlay is GameDef)
-        {
-            string homeFolder = (GamePlay as GameDef).gameInterface.ToFileSystemPath("$home");
-            string userFolder = (GamePlay as GameDef).gameInterface.ToFileSystemPath("$user");
-
-            GamePlay.gpLogServer(new Player[] { GamePlay.gpPlayer() }, "$home: " + homeFolder, null);
-            GamePlay.gpLogServer(new Player[] { GamePlay.gpPlayer() }, "$home: " + homeFolder, null);
-        }
-        else
-        {
-            GamePlay.gpLogServer(new Player[] { GamePlay.gpPlayer() }, "Can't cast GamePlay to GameDef.", null);
         }
     }
 
